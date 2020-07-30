@@ -25,11 +25,63 @@ Argumemt 3: string - file extension for the output file
 Argument 4: int - number of trailing bits to extract from the image
 Output: a file named secret using the file extension given  
 Usage example: ./steganographer decrypt secret.png txt 2
+
+Exit codes
+1 - Incorrect usage
+2 - Unable to open file
+3 - Image too small to encrypt the target file in
 */
 
-void encrypt(){}
+// Function for encryption
+// Inputs:
+// org - name of the image to be used in the encryption
+// file - name of the file to be encrypted
+// factor - number of trailing bits to change in each byte in the image
+int encrypt(string org, string file, int factor){
+	char inChar, fileChar, outChar;
+	int byte[8];
 
-void decrypt(){}
+	// Get filetype of original image
+	string encryptedImage = "secret" + org.substr(org.find_last_of("."), org.length());
+	
+	// Open required files
+	ifstream originalImage(org, ios::binary | ios::in);
+	ifstream targetFile(file, ios::binary | ios::in);
+	ofstream outputFile(encryptedImage, ios::binary | ios::out);
+
+	// Check that the files were opened properly
+	if(!originalImage.is_open()){
+		cout << "Error: unable to open " << org << endl;
+		return 2;
+	}
+	if(!targetFile.is_open()){
+		cout << "Error: unable to open " << file << endl;
+		return 2;
+	}
+
+	// Get size of original image and target file in bytes
+	originalImage.seekg(0, originalImage.end);
+	int imageSize = originalImage.tellg();
+	originalImage.seekg(0, originalImage.beg);
+
+	targetFile.seekg(0, targetFile.end);
+	int targetSize = targetFile.tellg();
+	targetFile.seekg(0, targetFile.beg);
+
+	// Check if encryption is possible
+	if((targetSize / factor * 8) > imageSize){
+		cout << "Error: file is too large to be encrypted with the given encryption factor" << endl;
+		return 3;
+	}
+
+	// Close files
+	originalImage.close();
+	targetFile.close();
+	outputFile.close();
+	return 0;
+}
+
+int decrypt(){ return 0; }
 
 int main(int argc, char * argv []){
 	// Check for correct number of arguments, exit if not called properly
@@ -38,22 +90,22 @@ int main(int argc, char * argv []){
 		return 1;
 	}
 
-	// Get filetype of original image
-	string original = argv[2];
-	string encryptedImage = "secret" + original.substr(original.find_last_of("."), original.length());
+	int hideFactor = stoi(argv[4]);
+	// Check that the hide factor is a power of 2 less than 8
+	if(hideFactor > 4 || hideFactor < 1 || hideFactor == 3){
+		cout << "Error: please choose an encryption factor of 1, 2, or 4" << endl;
+		return 1;
+	}
 	
-	// Open required files
-	ifstream originalImage(argv[2], ios::binary | ios::in);
-	ifstream targetFile(argv[3], ios::binary | ios::in);
-	ofstream outputFile("duplicate.png", ios::binary | ios::out);
-
-	// Get size of original image in bytes
-	originalImage.seekg(0, originalImage.end);
-	int imageSize = originalImage.tellg();
-	originalImage.seekg(0, originalImage.beg);
-
-	// ofstream outputFile(encryptedImage, ios::binary | ios::out);
+	string operation = argv[1];
+	if(operation == "encrypt"){ return encrypt(argv[2], argv[3], hideFactor); }
+	else if(operation == "decrypt"){ return decrypt(); }
+	else{
+		cout << "Error: invalid first argument, please see readme" << endl;
+		return 1;
+	}
 	
+	/* Testing code
 	char inChar, outChar;
 	int byte [8];
 	while(originalImage.get(inChar)){
@@ -68,16 +120,7 @@ int main(int argc, char * argv []){
 		}
 		outputFile.write(&outChar, sizeof(outChar));
 	}
+	*/
 
-	/*
-	while(originalImage.get(c)){
-		cout << c;
-		outputFile.write(&c, sizeof(c));
-	}*/
-
-	// Close open files
-	originalImage.close();
-	targetFile.close();
-	outputFile.close();
 	return 0;
 }
