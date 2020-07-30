@@ -54,16 +54,26 @@ int main(int argc, char * argv []){
 
 	// ofstream outputFile(encryptedImage, ios::binary | ios::out);
 	
-	char c;
+	char inChar, outChar;
 	int byte [8];
-	while(originalImage.get(c)){
+	while(originalImage.get(inChar)){
 		int j = 0;
 		for(int i = 7; i >= 0; i--){
-			byte[j] = ((c >> i) & 1);
+			byte[j] = ((inChar >> i) & 1);
 			j++;
 		}
-		outputFile.write((char *) &byte, sizeof(byte));
+		for(int j = 0; j < 8; j++){
+			outChar <<= 1;
+			outChar += byte[j];
+		}
+		outputFile.write(&outChar, sizeof(outChar));
 	}
+
+	/*
+	while(originalImage.get(c)){
+		cout << c;
+		outputFile.write(&c, sizeof(c));
+	}*/
 
 	// Close open files
 	originalImage.close();
