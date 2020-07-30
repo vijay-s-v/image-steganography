@@ -38,8 +38,8 @@ Exit codes
 // file - name of the file to be encrypted
 // factor - number of trailing bits to change in each byte in the image
 int encrypt(string org, string file, int factor){
-	char inChar, fileChar, outChar;
-	int byte[8];
+	char inChar, fileChar;
+	int fileByte[8], outByte[8];
 
 	// Get filetype of original image
 	string encryptedImage = "secret" + org.substr(org.find_last_of("."), org.length());
@@ -73,7 +73,47 @@ int encrypt(string org, string file, int factor){
 		cout << "Error: file is too large to be encrypted with the given encryption factor" << endl;
 		return 3;
 	}
+	
+	// Perform encryption
+	// Could probably be done more efficiently
+	while(targetFile.get(fileChar)){
+		int bitCounter = 0, outBitCounter = 0;
 
+		// Get bits of the byte from file
+		for(int i = 7; i >= 0; i--){
+			fileByte[bitCounter] = (fileChar >> i) & 1;
+			bitCounter++;
+		}
+
+		// Get bytes from image to encrypt
+		for(int i = 0; i < (8 / factor); i++){
+			bitCounter = 0;
+			char outChar;
+			originalImage.get(inChar);
+
+			// Load outgoing byte with image data
+			for(int j = 7; j >= factor; j--){
+				outByte[bitCounter] = (inChar >> i) & 1;
+				bitCounter++;
+			}
+
+			// Put file bits in the last few bits of the outgoing byte
+			for(int j = factor - 1; j >= 0; j--){
+				outByte[bitCounter] = fileByte[outBitCounter];
+				bitCounter++;
+				outBitCounter++;
+			}
+
+			// Prepare the byte and write to file
+			for(int j = 0; j < 8; j++){
+				outChar <<= 1;
+				outChar += outByte[j]; 
+			}
+			outputFile.write(&outChar, sizeof(outChar));
+		}
+		cout << outBitCounter << endl;
+	}
+	
 	// Close files
 	originalImage.close();
 	targetFile.close();
@@ -81,7 +121,15 @@ int encrypt(string org, string file, int factor){
 	return 0;
 }
 
-int decrypt(){ return 0; }
+// Function for decryption
+// Inputs:
+// file - image to be decrypted
+// ext - file extension of the output file
+// factor - number of trailing bits used in encryption
+int decrypt(string file, string ext, int factor){ 
+	// Perform decryption
+	return 0;
+}
 
 int main(int argc, char * argv []){
 	// Check for correct number of arguments, exit if not called properly
@@ -99,7 +147,7 @@ int main(int argc, char * argv []){
 	
 	string operation = argv[1];
 	if(operation == "encrypt"){ return encrypt(argv[2], argv[3], hideFactor); }
-	else if(operation == "decrypt"){ return decrypt(); }
+	else if(operation == "decrypt"){ return decrypt(argv[2], argv[3], hideFactor); }
 	else{
 		cout << "Error: invalid first argument, please see readme" << endl;
 		return 1;
